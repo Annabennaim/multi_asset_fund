@@ -10,9 +10,7 @@ def analyze_portfolio_performance(portfolio_df, benchmark_df=None):
         portfolio_df: DataFrame contenant les valeurs du portefeuille avec la colonne 'portfolio_value'
         benchmark_df: (facultatif) DataFrame contenant les valeurs de l'indice de référence, avec la colonne 'benchmark_value'
     """
-    portfolio_df['date'] = pd.to_datetime(portfolio_df['date'])
     portfolio_df.sort_values('date', inplace=True)
-    portfolio_df = portfolio_df[portfolio_df['date'] <= '2023-12-31']
     
     # Calcul des rendements hebdomadaires
     portfolio_df['return'] = portfolio_df['portfolio_value'].pct_change()
@@ -60,11 +58,13 @@ def analyze_portfolio_performance(portfolio_df, benchmark_df=None):
     
     # Tracé de la valeur du portefeuille
     plt.figure(figsize=(10, 5))
-    plt.plot(portfolio_df['date'], portfolio_df['portfolio_value'], label='Valeur du portefeuille', color='b')
+    plt.plot(portfolio_df.index, portfolio_df['portfolio_value'], label='Valeur du portefeuille', color='b')
     plt.xlabel('Date')
     plt.ylabel('Valeur du portefeuille (€)')
     plt.title('Évolution de la valeur du portefeuille')
+    plt.xlim(portfolio_df.index.min(), portfolio_df.index.max()) # Définir les limites de l'axe des x en fonction des dates présentes dans le DataFrame
     plt.legend()
     plt.grid()
     plt.show()
+    
     
