@@ -66,5 +66,21 @@ def analyze_portfolio_performance(portfolio_df, benchmark_df=None):
     plt.legend()
     plt.grid()
     plt.show()
-    
+
+    # Calculer la moyenne des valeurs des produits (tickers) sur toute la période du portefeuille
+    average_data = portfolio_df.drop(['cash', 'portfolio_value'], axis=1).mean()
+
+    # Clip pour s'assurer qu'aucune valeur négative n'est présente
+    average_data = average_data.clip(lower=0)
+
+    # Calculer la répartition en pourcentage pour chaque produit
+    total_value = portfolio_df['portfolio_value'].mean()  # Total moyen du portefeuille sur la période
+    product_percentage = average_data / total_value * 100
+
+    # Affichage du diagramme en secteurs pour la répartition moyenne
+    plt.figure(figsize=(8, 8))
+    plt.pie(product_percentage, labels=product_percentage.index, autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
+    plt.title("Répartition moyenne du portefeuille")
+    plt.axis('equal')  # Assurer un cercle parfait
+    plt.show()
     
