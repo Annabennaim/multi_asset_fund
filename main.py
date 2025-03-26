@@ -204,12 +204,15 @@ def analyze_client_performance():
     print(f"Début de l'analyse à partir du: {client_registration_date}")
     print(f"Montant initial investi : {initial_amount:,.2f} €")
     
- # Créer une instance de Simulation
+     # Créer une instance de Simulation
     simulation = Simulation(db, portfolio_id, strategy, client_registration_date)
     
     # DataFrame pour stocker les performances du portefeuille
-    portfolio_performance_df = pd.DataFrame(columns=["date", "AAPL", "NVDA", "cash", "portfolio_value"])
+    portfolio_performance_df = pd.DataFrame(columns=["date", "cash", "portfolio_value"])
     
+    # Variable pour stocker les tickers (produits uniques) rencontrés
+    all_tickers = set()
+
     # Simuler la gestion active du portefeuille
     current_date = datetime.strptime(client_registration_date, '%Y-%m-%d')
     end_date = datetime(2024, 12, 31)
@@ -222,23 +225,31 @@ def analyze_client_performance():
         # Exécuter la stratégie pour ce lundi
         positions, cash = simulation.execute_strategy(current_date)
         
-        # Ajouter les données au DataFrame
+        # Ajouter les tickers rencontrés à la liste
         for position in positions:
-            new_row = pd.DataFrame([{
-                "date": current_date,
-                "product_id": position['product_id'],
-                "product_name": position['ticker'],
-                "product_price": position['price'],
-                "weight": position['weight'],
-                "cash": cash['value'],
-                "portfolio_value": sum(p['value'] for p in positions) + cash['value']
-            }])
-
-            portfolio_performance_df = pd.concat([portfolio_performance_df, new_row], ignore_index=True)
-
+            all_tickers.add(position['ticker'])
+        
+        # Créer une ligne pour stocker la valeur de chaque produit et la valeur totale du portefeuille
+        row = {'date': current_date, 'cash': cash['value'], 'portfolio_value': sum(p['value'] for p in positions) + cash['value']}
+        
+        # Ajouter les valeurs des produits (tickers) dynamiquement dans le DataFrame
+        for ticker in all_tickers:
+            ticker_value = sum(p['value'] for p in positions if p['ticker'] == ticker)
+            row[ticker] = ticker_value
+        
+        # Ajouter la ligne au DataFrame
+        new_row = pd.DataFrame([row])
+        portfolio_performance_df = pd.concat([portfolio_performance_df, new_row], ignore_index=True)
         
         # Passer à la semaine suivante
         current_date += timedelta(days=7)
+    
+    # Réorganiser le DataFrame pour avoir une colonne pour chaque produit et la valeur totale
+    portfolio_performance_df.set_index('date', inplace=True)
+    
+    # Afficher le DataFrame des performances
+    print("\n=== Performance du portefeuille ===")
+    print(portfolio_performance_df)
     
     # Analyse des performances
     analyze_portfolio_performance(portfolio_performance_df)
@@ -338,3 +349,4 @@ def analyze_fund_performance():
 
 if __name__ == "__main__":
     main()
+
